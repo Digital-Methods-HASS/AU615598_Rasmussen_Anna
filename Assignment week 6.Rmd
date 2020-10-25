@@ -1,0 +1,75 @@
+---
+title: 'W6: Practicing Functions'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(gganimate)
+library(gapminder)
+```
+Define a defensive function that calculates the Gross Domestic Product of a nation from the data available in the gapminder dataset. Using that function, calculate the GDP of Denmark in the following years: 1967, 1977, 1987, 1997, 2007 and 2017.
+#OBS! 2017 does not exist in the dataset
+
+```{r}
+#Creating a function, which calculates the GDP per nation by multiplying the "GDP per capita" with "population":
+
+calcGDP <- function(dat) {
+  gdp <- dat$pop * dat$gdpPercap
+  return(gdp)
+}
+
+calcGDP <- function(dat, year=NULL, country=NULL) {
+ if(!is.null(year)) {
+    dat <- dat[dat$year %in% year, ]
+  }
+  if (!is.null(country)) {
+    dat <- dat[dat$country %in% country,]
+  }
+  gdp <- dat$pop * dat$gdpPercap
+
+  new <- cbind(dat, gdp=gdp)
+  return(new)
+}
+
+# Printing the GDP for Denmark in specific years:
+calcGDP(gapminder, year=c(1967, 1977, 1987, 1997, 2007, 2017), country="Denmark")
+```
+
+
+Write a script that loops over each country in the gapminder dataset, tests whether the country starts with a ‘B’ , and print out whether the life expectancy is smaller than 50, between 50 and 70, or greater than 70.
+
+```{r}
+# I grep the countries, which starts with B and put them into an object called BCountries
+unique(gapminder$country)
+BCountries <- grep("^B", unique(gapminder$country), value=TRUE) 
+
+```
+
+
+```{r}
+# The countries started with B listed
+BCountries
+```
+
+```{r}
+# I don't understand why this is necessary, but it doesn't work without (Help??):
+gapminder <- as.data.frame(gapminder) 
+
+
+# Creating a loop that checks the average Life Expectancy for the countries starting with B, whereafter it prints them 
+
+for (iCountry in BCountries) {
+  tmp <- mean(gapminder[gapminder$country == iCountry, "lifeExp"])
+  if(tmp >= 70){
+    print(paste("Average Life Expectancy in", iCountry, "is equal to or larger than")) }  
+  else if (tmp>=50) {
+   print(paste("Average Life Expectancy in", iCountry, "is between 50 and 70 years"))}
+  else { print(paste("Average Life Expectancy in", iCountry, "is smaller than 50"))
+  }}
+```
+
+
+
