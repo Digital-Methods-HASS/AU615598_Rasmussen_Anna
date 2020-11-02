@@ -1,0 +1,82 @@
+---
+title: "Homework week 8"
+author: "Anna Hald"
+date: "2/11/2020"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## GOAL
+
+1) adapt the webscraping example to scrape homicide data from FBI site and produce a meaningful report on how homicide trends evolve around US in relation to this urban unrest
+
+I use data from following website:
+https://ucr.fbi.gov/crime-in-the-u.s/2018/crime-in-the-u.s.-2018/topic-pages/tables/table-4 
+
+# Solution
+First, load a handful of classic R packages:
+
+{rvest} for web-scraping
+{dplyr} for data-wrangling
+{tidyr} for data transformation
+{stringr} for string manipulation
+{janitor} for clean headers that your OCD will love you for
+
+
+```{r libraries}
+library(tidyverse)
+library(rvest)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(janitor)
+```
+
+## Scrape the data
+
+Next, learn how scrape the content of the website and extract the HTML table:
+```{r}
+url <- "https://ucr.fbi.gov/crime-in-the-u.s/2018/crime-in-the-u.s.-2018/topic-pages/tables/table-4"
+# scrape the website
+url_html <- read_html(url)
+
+whole_table <- url_html %>% 
+ html_nodes("table") %>%
+ html_table(fill = TRUE)  #str(whole_table) turns out to be a list
+
+```
+
+I have found guidance from following tutorial: https://www.r-bloggers.com/2020/04/scrape-html-table-using-rvest/
+
+```{r}
+# Changing the table from a list into a dataframe:
+table <- whole_table[[1]]
+
+glimpse(table) #shows that it reads the table as characters instead of numbers
+
+# Cleaning the table
+table <- table[-1,] #removes first row after the coloumn names as it is not useful
+table <- table %>% clean_names() #clean the names of the coloumns (a part of the janitor package)
+names(table)
+```
+
+Now I have a useful table. I wish to look at the development of homicides from 2017 to 2018 around US. The FBI table already has a row, which shows the percent change from 2017 to 2018 in each state, and therefore I filter that out in the following chunk. Thereafter, I choose the relevant coloumns, arrange them and create a barplot to show the difference in development according to states.
+
+```{r}
+table %>% 
+	filter(year == "Percent change") %>% 
+	mutate(murder_and_nonnegligent_manslaughter = parse_number(murder_and_nonnegligent_manslaughter)) %>%  #this mutates from characters to numbers 
+	select(area,murder_and_nonnegligent_manslaughter) %>% 
+	arrange(desc(murder_and_nonnegligent_manslaughter)) %>%
+  mutate(area = fct_reorder(area, murder_and_nonnegligent_manslaughter)) %>%
+	head(35) %>% # I only take the head 35, because otherwise it gets crammed...
+	ggplot() + geom_bar(aes(y = area, x = murder_and_nonnegligent_manslaughter), stat = "identity", fill = "yellow") +
+labs(title = "Development of homicides from 2017 to 2018 in US States",
+       caption = "Data Source: FBI:UCR", x = "Percent change in number of murders from 2017 to 2018", y = "Area")
+```
+
