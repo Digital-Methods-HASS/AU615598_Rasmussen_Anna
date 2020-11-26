@@ -1,0 +1,129 @@
+---
+title: "Final Project"
+author: "Anna Hald"
+date: "3/11/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r packages}
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+```
+
+# I read in the csv-files. The last part 'colClasses = character' is to read the data as characters and not as numbers in order to keep the commas ... will this be a problem later on??
+```{r tables}
+ghettoer <- read.csv(file = "data/Ghettoer_clean.csv", colClasses = "character")
+hårdeghettoer <- read.csv(file = "data/Hårde_clean.csv", colClasses = "character")
+udsatte <- read.csv(file = "data/Udsatte_clean.csv", colClasses = "character")
+```
+
+# I wish to have a table with all the 'udsatte boligområder' + the criteria of ethnicity, and therefore I wish to merge the tables 'udsatte' and 'ghettoer'
+
+```{r}
+etnicitet <- ghettoer %>% 
+	select(Område, Etnicitet)
+samlet <- merge(x=udsatte, y=etnicitet, by = "Område", all.x = TRUE)
+```
+
+# Testing if the plot can read the data in the table as numbers - which it does!
+```{r}
+samlet %>% 
+	ggplot() + geom_bar(aes(x = Område, y = Etnicitet), stat = "identity", fill = "yellow")
+```
+
+# Trying out things with map
+```{r}
+install.packages("knitr")
+# install.packages("maps")
+install.packages("ggplot2")
+# install.packages("mapDK")
+
+library(knitr)
+#library(maps)
+library(ggplot2)
+#library(mapDK)
+```
+```{r}
+# if(!require("devtools")) install.packages("devtools")
+# devtools::install_github("sebastianbarfort/mapDK")
+```
+
+# Skipping this.... trying to do some 'faceting' https://datacarpentry.org/r-socialsci/04-ggplot2/index.html
+```{r}
+library(ggplot2)
+```
+
+```{r}
+kommuner <- c("Aarhus","København")
+samlet %>%
+	filter(Kommune==kommuner) %>% 
+    ggplot(aes(x = Område, y = Uddannelse)) +
+    geom_bar(stat = "identity", position = "dodge") +
+    labs(title="Proportion of wall type by village",
+         x="Dømte",
+         y="Percent") +
+    facet_wrap(~ Kommune)
+```
+
+## GRAF OVER DØMTE PR. OMRÅDE
+```{r}
+samletkategoriseret %>% 
+	mutate(Område = fct_reorder(Område, Dømte)) %>%
+	ggplot(aes(x = Område, y = Dømte, fill = Ghetto)) + # 'FILL = ghetto i stedet for 'color' udfylder barerne i stedet for kun at optegne omrids
+  geom_bar(stat = "identity") + scale_fill_brewer(palette = "Pastel2") + #Scale_fill_brewer trækker på farver fra Rbrewer-pakken, jeg har hentet længere nede
+	coord_flip()  #FLIPS THE PLOT
+```
+## OVERSIGT KUN FOR KØBENHAVN OG AARHUS 
+
+```{r}
+samletkategoriseret %>% 
+	filter(Kommune==kommuner) %>% 
+	mutate(Område = fct_reorder(Område, Dømte)) %>%
+	ggplot(aes(x = Område, y = Dømte, fill = Ghetto)) + # 'FILL = ghetto i stedet for 'color' udfylder barerne i stedet for kun at optegne omrids
+  geom_bar(stat = "identity") + scale_fill_brewer(palette = "Pastel2")  #Scale_fill_brewer trækker på farver fra Rbrewer-pakken, jeg har hentet længere nede
+
+```
+
+
+## OMDANNER ETNICITETS-KOLONNEN TIL AT VÆRE GHETTO = JA / NEJ
+```{r}
+samletkategoriseret <- mutate(samlet, Ghetto = ifelse(Etnicitet > 50, "Ghettoområde", "Udsat område"))
+```
+
+## Overskrive NA's til 'udsat område' - dataframe$kolonne - i alle NA's i den skal der stå <- "det her"
+```{r}
+samletkategoriseret$Ghetto[is.na(samletkategoriseret$Ghetto)] <- "Udsat område"
+```
+
+## HVORDAN ÆNDRER JEG TIL FORSKELLIGE FARVER I FACETS?
+```{r}
+
+samletkategoriseret %>% 
+    ggplot(aes(x = Område, y = Uddannelse)) +
+    geom_bar(stat = "identity", position = "dodge", fill = "Red") +
+    labs(title="Proportion of wall type by village",
+         x="Dømte",
+         y="Percent") +
+    facet_wrap(~ Ghetto)
+```
+```{r}
+install.packages("RColorBrewer")
+library(RColorBrewer)
+display.brewer.all()
+```
+
+```{r}
+samletkategoriseret %>% 
+	mutate(dømtethreshold=Dømte>2,03) %>% 
+	ggplot(aes(x = dømtethreshold, y = dømtethreshold)) +
+    geom_bar(stat = "identity", position = "dodge")
+
+x = subset(dømte>2,03)
+```
+
