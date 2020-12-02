@@ -3,27 +3,46 @@ title: "Final Project"
 author: "Anna Hald"
 date: "3/11/2020"
 output: html_document
+			
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# GOAL: Analyze data from Boligstyreslsen's lists of 'Ghettoes' and 'Vulnerable areas' and visualize it in plots
+Link to data: https://www.trafikstyrelsen.dk/da/Bolig/Udsatte-boligomraader/Udsatte-omraader-og-ghettoomraader#omraadeafgraensninger 
+
+## PACKAGES
+First, I load the necessary packages:
 
 ```{r packages}
 library(tidyverse)
 library(dplyr)
 library(tidyr)
+library(ggplot2)
+library(knitr)
 ```
 
-# I read in the csv-files. The last part 'colClasses = character' is to read the data as characters and not as numbers in order to keep the commas ... will this be a problem later on??
+## DATA 
+I read in the 3 cleaned csv-files (cleaned in Open Refine on beforehand). One for each list.
+The last part colClasses = "character" is in order to read the data as characters and not as numbers, because otherwise the commas in the files are lost.
+
 ```{r tables}
 ghettoer <- read.csv(file = "data/Ghettoer_clean.csv", colClasses = "character")
 hårdeghettoer <- read.csv(file = "data/Hårde_clean.csv", colClasses = "character")
 udsatte <- read.csv(file = "data/Udsatte_clean.csv", colClasses = "character")
 ```
 
-# I wish to have a table with all the 'udsatte boligområder' + the criteria of ethnicity, and therefore I wish to merge the tables 'udsatte' and 'ghettoer'
+I wish to test, if the values in the dataframes are read as numbers, even though I specified it as characters. And they are!
+```{r}
+ghettoer %>% 
+	ggplot() + geom_bar(aes(x = Område, y = Etnicitet), stat = "identity", fill = "yellow")
+```
+
+## DATA WRANGLING 1
+I wish to have a dataframe with all the areas ('vulnerable' & 'ghettoes') in which it is possible to see how the area is categorized. 
+Therefore, I merge the dataframes I add to the dataframe 'udsatte' (vulnerable) the coloumn 'Etnicitet' from the dataframe 'ghetto'. 
 
 ```{r}
 etnicitet <- ghettoer %>% 
@@ -31,99 +50,102 @@ etnicitet <- ghettoer %>%
 samlet <- merge(x=udsatte, y=etnicitet, by = "Område", all.x = TRUE)
 ```
 
-# Testing if the plot can read the data in the table as numbers - which it does!
+Now that I have a way to differentiate the ghettoes, I can use the mutate in combination with the if-else function to create a coloumn that adds the value 'ghetto', if the ethnicity is > 50, and 'vulnerable area' if it is under.
+
 ```{r}
-samlet %>% 
-	ggplot() + geom_bar(aes(x = Område, y = Etnicitet), stat = "identity", fill = "yellow")
+samletkategoriseret <- mutate(samlet, Ghetto = ifelse(Etnicitet > 50, "''Ghetto''", "''Vulnerable Area''"))
 ```
 
-# Trying out things with map
+It does not count in the NA's, so instead I add the value "Vulnerable Area" in this way:
 ```{r}
-install.packages("knitr")
-# install.packages("maps")
-install.packages("ggplot2")
-# install.packages("mapDK")
-
-library(knitr)
-#library(maps)
-library(ggplot2)
-#library(mapDK)
-```
-```{r}
-# if(!require("devtools")) install.packages("devtools")
-# devtools::install_github("sebastianbarfort/mapDK")
+samletkategoriseret$Ghetto[is.na(samletkategoriseret$Ghetto)] <- "''Vulnerable Area''"
 ```
 
-# Skipping this.... trying to do some 'faceting' https://datacarpentry.org/r-socialsci/04-ggplot2/index.html
+## PLOTTING 1
+I install a package with extra color pallettes, I can choose from, when plotting.
 ```{r}
-library(ggplot2)
-```
-
-```{r}
-kommuner <- c("Aarhus","København")
-samlet %>%
-	filter(Kommune==kommuner) %>% 
-    ggplot(aes(x = Område, y = Uddannelse)) +
-    geom_bar(stat = "identity", position = "dodge") +
-    labs(title="Proportion of wall type by village",
-         x="Dømte",
-         y="Percent") +
-    facet_wrap(~ Kommune)
-```
-
-## GRAF OVER DØMTE PR. OMRÅDE
-```{r}
-samletkategoriseret %>% 
-	mutate(Område = fct_reorder(Område, Dømte)) %>%
-	ggplot(aes(x = Område, y = Dømte, fill = Ghetto)) + # 'FILL = ghetto i stedet for 'color' udfylder barerne i stedet for kun at optegne omrids
-  geom_bar(stat = "identity") + scale_fill_brewer(palette = "Pastel2") + #Scale_fill_brewer trækker på farver fra Rbrewer-pakken, jeg har hentet længere nede
-	coord_flip()  #FLIPS THE PLOT
-```
-## OVERSIGT KUN FOR KØBENHAVN OG AARHUS 
-
-```{r}
-samletkategoriseret %>% 
-	filter(Kommune==kommuner) %>% 
-	mutate(Område = fct_reorder(Område, Dømte)) %>%
-	ggplot(aes(x = Område, y = Dømte, fill = Ghetto)) + # 'FILL = ghetto i stedet for 'color' udfylder barerne i stedet for kun at optegne omrids
-  geom_bar(stat = "identity") + scale_fill_brewer(palette = "Pastel2")  #Scale_fill_brewer trækker på farver fra Rbrewer-pakken, jeg har hentet længere nede
-
-```
-
-
-## OMDANNER ETNICITETS-KOLONNEN TIL AT VÆRE GHETTO = JA / NEJ
-```{r}
-samletkategoriseret <- mutate(samlet, Ghetto = ifelse(Etnicitet > 50, "Ghettoområde", "Udsat område"))
-```
-
-## Overskrive NA's til 'udsat område' - dataframe$kolonne - i alle NA's i den skal der stå <- "det her"
-```{r}
-samletkategoriseret$Ghetto[is.na(samletkategoriseret$Ghetto)] <- "Udsat område"
-```
-
-## HVORDAN ÆNDRER JEG TIL FORSKELLIGE FARVER I FACETS?
-```{r}
-
-samletkategoriseret %>% 
-    ggplot(aes(x = Område, y = Uddannelse)) +
-    geom_bar(stat = "identity", position = "dodge", fill = "Red") +
-    labs(title="Proportion of wall type by village",
-         x="Dømte",
-         y="Percent") +
-    facet_wrap(~ Ghetto)
-```
-```{r}
-install.packages("RColorBrewer")
+# install.packages("RColorBrewer")
 library(RColorBrewer)
 display.brewer.all()
 ```
 
-```{r}
-samletkategoriseret %>% 
-	mutate(dømtethreshold=Dømte>2,03) %>% 
-	ggplot(aes(x = dømtethreshold, y = dømtethreshold)) +
-    geom_bar(stat = "identity", position = "dodge")
+Now I can start plotting. I wish to have a plot that shows the crime rates for each area and which clearly shows, if the area is defined as a ghetto or not. I do this by using an argument that picks color according to the value of the 'Ghetto' coloumn.
+Furthermore, I add ad intercepting line to mark where the threshold value is for the areas to meet the criteria.
+I have used the following tutorial to receive help on customizing labels on the plot:
+http://www.sthda.com/english/wiki/ggplot2-axis-ticks-a-guide-to-customize-tick-marks-and-labels
 
-x = subset(dømte>2,03)
+```{r, echo=FALSE}
+p <- samletkategoriseret %>% 
+	mutate(Område = fct_reorder(Område, Dømte)) %>%
+	ggplot(aes(x = Område, y = Dømte, fill = Ghetto)) + # 'FILL = ghetto i stedet for 'color' udfylder barerne i stedet for kun at optegne omrids
+  geom_bar(stat = "identity") + scale_fill_brewer(palette = "Pastel2") + #Colors from the scale_fill_brewer package
+	coord_flip() + #FLIPS THE PLOT
+	theme(axis.text.x = element_text(size=5, angle=45), axis.text.y = element_text(size=7, angle=0)) + #Changes the angle on the numbers
+	geom_hline(yintercept=24, linetype="dashed", color = "coral") +
+	labs(title="CRIME RATES (based on data from 2017-2018)",
+         x="Residential Areas on the ''Vulnerable Areas'' list ",
+         y="Percentage of Sentenced Residents")+
+	guides(fill=guide_legend(title="Categorization of the Area"))
+p + annotate("text", x=5, y=31, label="Areas ≥ 2.03 %", size=4, color="coral") + annotate("text", x=3, y=31, label="meet the criteria", size=4, color="coral")
+```
+
+## TILFØJE HÅRDE GHETTOER ... WHAT, KUN VOLLSMOSE
+```{r}
+HårdeGhettoer <- hårdeghettoer$Område
+allareas <- samletkategoriseret %>%
+	mutate(samletkategoriseret, Categorization = ifelse(samletkategoriseret$Område %in% HårdeGhettoer, "Hård Ghetto", "Ikke"))
+	
+hep <- samletkategoriseret %>% 
+	rename_if(samletkategoriseret, ) ....
+
+hårdeghettoer_2 <- hårdeghettoer %>% 
+	mutate(Kategoriseret = "Hård_Ghetto")
+
+HÅRD <- hårdeghettoer_2 %>% 
+	select(Område, Kategoriseret)
+
+allcategorized <- merge(x=samletkategoriseret, y=HÅRD, by = "Område", all.x = TRUE)
+
+```
+
+## DATA WRANGLING 2
+I wish to do an analysis to see how many areas that meet each of the 4 criteria.
+
+First, I need to change the commas in the dataframes, so R can read it properly.
+```{r}
+samletkategoriseret$Dømte <- gsub(",",".", c(samletkategoriseret$Dømte))
+samletkategoriseret$Uddannelse <- gsub(",",".", c(samletkategoriseret$Uddannelse))
+samletkategoriseret$Indkomst <- gsub(",",".", c(samletkategoriseret$Indkomst))
+samletkategoriseret$Etnicitet <- gsub(",",".", c(samletkategoriseret$Etnicitet))
+samletkategoriseret$Ledighed <- gsub(",",".", c(samletkategoriseret$Ledighed))
+```
+
+Second, I create an object for each criteria using the length argument to summarize the number of areas that meet each criteria.
+```{r}
+n_dømte <- length(samletkategoriseret[samletkategoriseret$Dømte >=2.03, "Dømte"])
+n_ledighed <- length(samletkategoriseret[samletkategoriseret$Ledighed > 40, "Ledighed"])
+n_uddannelse <- length(samletkategoriseret[samletkategoriseret$Uddannelse > 60, "Uddannelse"])
+n_indkomst <- length(samletkategoriseret[samletkategoriseret$Indkomst < 55, "Indkomst"])
+```
+
+I create a new dataframe that contains a coloumn with these lengths and a coloumn with the names of the criterias
+```{r}
+n_alle <- c(n_dømte, n_ledighed, n_uddannelse, n_indkomst)
+kriterier <- c("Crime Rate","Employment","Education","Income")
+
+criteriacount <- data.frame(n_alle, kriterier)
+```
+
+## PLOTTING 2
+Now, it is easy to plot.
+```{r, echo=FALSE}
+criteriacount %>% 
+	ggplot(aes(x=kriterier,y=n_alle, fill = kriterier)) + 
+  geom_bar(stat = "identity") + theme_minimal() + scale_fill_brewer(palette = "Pastel2") +
+	geom_text(aes(label=n_alle), vjust=1.6, color="white", size=3.5) +
+	labs(title="NUMBER OF AREAS MEETING EACH CRITERIA",
+         x="Criteria",
+         y="Number of Areas")+
+	guides(fill=guide_legend(title="Criteria"))
 ```
 

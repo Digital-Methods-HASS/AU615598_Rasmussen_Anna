@@ -1,0 +1,40 @@
+OPEN REFINE SCRIPT
+
+[
+  {
+    "op": "core/column-rename",
+    "oldColumnName": "Beboere (1.000 +) 1. jan 2019",
+    "newColumnName": "Beboere",
+    "description": "Rename column Beboere (1.000 +) 1. jan 2019 to Beboere"
+  },
+  {
+    "op": "core/column-rename",
+    "oldColumnName": "Udenfor arb.marked > 40 pct. 2017-18",
+    "newColumnName": "Ledighed",
+    "description": "Rename column Udenfor arb.marked > 40 pct. 2017-18 to Ledighed"
+  },
+  {
+    "op": "core/column-rename",
+    "oldColumnName": "E & I Ikke vestlig > 50 pct. 1. jan 2019",
+    "newColumnName": "Etnicitet",
+    "description": "Rename column E & I Ikke vestlig > 50 pct. 1. jan 2019 to Etnicitet"
+  },
+  {
+    "op": "core/column-rename",
+    "oldColumnName": "D¿mte ³ 2,03 pct. 2017-18",
+    "newColumnName": "D¿mte",
+    "description": "Rename column D¿mte ³ 2,03 pct. 2017-18 to D¿mte"
+  },
+  {
+    "op": "core/column-rename",
+    "oldColumnName": "Kun grundskole > 60 pct. 1. jan 2019",
+    "newColumnName": "Uddannelse",
+    "description": "Rename column Kun grundskole > 60 pct. 1. jan 2019 to Uddannelse"
+  },
+  {
+    "op": "core/column-rename",
+    "oldColumnName": "Gns. indkomst < 55 pct. r 2018",
+    "newColumnName": "Indkomst",
+    "description": "Rename column Gns. indkomst < 55 pct. r 2018 to Indkomst"
+  }
+]
