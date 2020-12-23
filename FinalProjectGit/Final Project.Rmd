@@ -61,6 +61,22 @@ It does not count in the NA's, so instead I add the value "Vulnerable Area" in t
 samletkategoriseret$Ghetto[is.na(samletkategoriseret$Ghetto)] <- "''Vulnerable Area''"
 ```
 
+## I wish to further differentiate the ghettoes, so it shows which are "hard ghettoes"
+When I try to merge the tables (the last line, 77), only one of the hard ghettoes appear. I cannot figure out why? Therefore, I do not use the new dataframes in the following plots... 
+```{r}
+HårdeGhettoer <- hårdeghettoer$Område
+allareas <- samletkategoriseret %>%
+	mutate(samletkategoriseret, Categorization = ifelse(samletkategoriseret$Område %in% HårdeGhettoer, "Hård Ghetto", "Ikke"))
+	
+hårdeghettoer_2 <- hårdeghettoer %>% 
+	mutate(Kategoriseret = "Hård_Ghetto")
+
+HÅRD <- hårdeghettoer_2 %>% 
+	select(Område, Kategoriseret)
+
+allcategorized <- merge(x=samletkategoriseret, y=HÅRD, by = "Område", all.x = TRUE)
+```
+
 ## PLOTTING 1
 I install a package with extra color pallettes, I can choose from, when plotting.
 ```{r}
@@ -87,25 +103,6 @@ p <- samletkategoriseret %>%
          y="Percentage of Sentenced Residents")+
 	guides(fill=guide_legend(title="Categorization of the Area"))
 p + annotate("text", x=5, y=31, label="Areas ≥ 2.03 %", size=4, color="coral") + annotate("text", x=3, y=31, label="meet the criteria", size=4, color="coral")
-```
-
-## TILFØJE HÅRDE GHETTOER ... WHAT, KUN VOLLSMOSE
-```{r}
-HårdeGhettoer <- hårdeghettoer$Område
-allareas <- samletkategoriseret %>%
-	mutate(samletkategoriseret, Categorization = ifelse(samletkategoriseret$Område %in% HårdeGhettoer, "Hård Ghetto", "Ikke"))
-	
-hep <- samletkategoriseret %>% 
-	rename_if(samletkategoriseret, ) ....
-
-hårdeghettoer_2 <- hårdeghettoer %>% 
-	mutate(Kategoriseret = "Hård_Ghetto")
-
-HÅRD <- hårdeghettoer_2 %>% 
-	select(Område, Kategoriseret)
-
-allcategorized <- merge(x=samletkategoriseret, y=HÅRD, by = "Område", all.x = TRUE)
-
 ```
 
 ## DATA WRANGLING 2
