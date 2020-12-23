@@ -1,9 +1,8 @@
 ---
 title: "Final Project"
 author: "Anna Hald"
-date: "3/11/2020"
+date: "23/12/2020"
 output: html_document
-			
 ---
 
 ```{r setup, include=FALSE}
@@ -61,7 +60,7 @@ It does not count in the NA's, so instead I add the value "Vulnerable Area" in t
 samletkategoriseret$Ghetto[is.na(samletkategoriseret$Ghetto)] <- "''Vulnerable Area''"
 ```
 
-## I wish to further differentiate the ghettoes, so it shows which are "hard ghettoes"
+I wish to further differentiate the ghettoes, so it shows which are "hard ghettoes"
 When I try to merge the tables (the last line, 77), only one of the hard ghettoes appear. I cannot figure out why? Therefore, I do not use the new dataframes in the following plots... 
 ```{r}
 HårdeGhettoer <- hårdeghettoer$Område
